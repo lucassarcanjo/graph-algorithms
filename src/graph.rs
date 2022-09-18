@@ -15,14 +15,15 @@ pub struct Adjacency {
 }
 
 pub struct Graph {
-  pub(crate) adjacency_list: Vec<Adjacency>
+  pub(crate) adjacency_list: Vec<Adjacency>,
+  pub(crate) is_directed: bool
 }
 
 impl Graph {
-  pub fn new() -> Self {
+  pub fn new(is_directed: bool) -> Self {
     let adjacency_list = Vec::new();
 
-    Self { adjacency_list }
+    Self { adjacency_list, is_directed }
   }
 
   pub fn add_edge(&mut self, from: &'static str, to: &'static str) {
@@ -54,6 +55,12 @@ impl Graph {
       };
 
       self.adjacency_list.push(adj);
+    }
+
+    if !self.is_directed {
+      // add reverse edge for undirected graphs
+      let to_index = self.get_node_position_by_name(to).unwrap();
+      self.adjacency_list[to_index].list.push_back(from);
     }
 
     self.adjacency_list[node_from_index].list.push_back(to);

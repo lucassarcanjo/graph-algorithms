@@ -2,16 +2,16 @@ use std::{collections::{LinkedList, VecDeque}, borrow::Borrow};
 
 #[derive(Clone)]
 pub struct Node {
-  name: String,
-  parent_name: String,
-  level: i32,
+  name: &'static str,
+  // parent_name: &'static str,
+  // level: i32,
   index: i32,
   visited: bool,
 }
 
 pub struct Adjacency {
-  node: String,
-  list: LinkedList<String>
+  node: &'static str,
+  list: LinkedList<&'static str>
 }
 
 pub struct Graph {
@@ -25,8 +25,8 @@ impl Graph {
     Self { adjacency_list }
   }
 
-  pub fn add_edge(&mut self, from: String, to: String) {
-    let from_index_result = self.get_node_position_by_name(from.to_owned());
+  pub fn add_edge(&mut self, from: &'static str, to: &'static str) {
+    let from_index_result = self.get_node_position_by_name(from);
 
     let node_from_index = match from_index_result {
       // if node not exists yet at self.adjacency_list
@@ -45,11 +45,11 @@ impl Graph {
       Some(i) => i
     };
 
-    let to_index_result = self.get_node_position_by_name(to.to_owned());
+    let to_index_result = self.get_node_position_by_name(to);
 
     if to_index_result == None {
       let adj = Adjacency {
-        node: to.to_owned(),
+        node: to,
         list: LinkedList::new()
       };
 
@@ -59,9 +59,9 @@ impl Graph {
     self.adjacency_list[node_from_index].list.push_back(to);
   }
 
-  pub fn bfs(&mut self, start_node_name: String) {
+  pub fn bfs(&mut self, start_node_name: &str) {
     // check if the start node is valid
-    let start_node_result = self.get_node_position_by_name(start_node_name.to_owned());
+    let start_node_result = self.get_node_position_by_name(start_node_name);
 
     if start_node_result == None {
       println!("Invalid node, you must to add an edge with name: {} or add a node manually", start_node_name);
@@ -79,9 +79,9 @@ impl Graph {
       node_list.push(
         Node { 
           index: 0,
-          level: 0,
-          name: list_item.node.to_owned(),
-          parent_name: "".to_owned(),
+          // level: 0,
+          // parent_name: "",
+          name: list_item.node,
           visited: false,
         })
     };
@@ -124,7 +124,7 @@ impl Graph {
 
   }
 
-  fn get_node_position_by_name(&mut self, name: String) -> Option<usize> {
+  fn get_node_position_by_name(&mut self, name: &str) -> Option<usize> {
     self.adjacency_list.iter().position(|x| x.node == name)
   }
 }

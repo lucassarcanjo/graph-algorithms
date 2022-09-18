@@ -1,53 +1,130 @@
-use std::collections::LinkedList;
+use std::{collections::{LinkedList, VecDeque}, borrow::Borrow};
+
+#[derive(Clone)]
+pub struct Node {
+  name: String,
+  parent_name: String,
+  level: i32,
+  index: i32,
+  visited: bool,
+}
+
+pub struct Adjacency {
+  node: String,
+  list: LinkedList<String>
+}
 
 pub struct Graph {
-  // Adjacency lists
-  pub(crate) adj_list: Vec<LinkedList<usize>>,
-
-  // Count of vertices
-  pub(crate) vertex_count: usize,
+  pub(crate) adjacency_list: Vec<Adjacency>
 }
 
 impl Graph {
-  pub fn new(vertex_qty: usize) -> Self {
-    let list = vec![LinkedList::new(); vertex_qty];
+  pub fn new() -> Self {
+    let adjacency_list = Vec::new();
 
-    Self { vertex_count: vertex_qty, adj_list: list }
+    Self { adjacency_list }
   }
 
-  pub fn add_edge(&mut self, vertex: usize, value: usize) {
-    self.adj_list[vertex].push_back(value);
+  pub fn add_edge(&mut self, from: String, to: String) {
+    let from_index_result = self.get_node_position_by_name(from.to_owned());
+
+    let node_from_index = match from_index_result {
+      // if node not exists yet at self.adjacency_list
+      None => {
+        let adj = Adjacency {
+          node: from,
+          list: LinkedList::new()
+        };
+
+        self.adjacency_list.push(adj);
+
+        // return index of new item
+        self.adjacency_list.len() - 1
+      },
+      // if node already exists
+      Some(i) => i
+    };
+
+    let to_index_result = self.get_node_position_by_name(to.to_owned());
+
+    if to_index_result == None {
+      let adj = Adjacency {
+        node: to.to_owned(),
+        list: LinkedList::new()
+      };
+
+      self.adjacency_list.push(adj);
+    }
+
+    self.adjacency_list[node_from_index].list.push_back(to);
   }
 
-  pub fn bfs(&mut self, start_vertex: usize) {
-    // TODO: check if the start vertice is valid
-    
-    // create a new vector of each vertice and initialized with non-visited
-    let mut visited = vec![false; self.vertex_count];
+  pub fn bfs(&mut self, start_node_name: String) {
+    // check if the start node is valid
+    let start_node_result = self.get_node_position_by_name(start_node_name.to_owned());
 
-    // create a queue for BFS
-    let mut queue: LinkedList<usize> = LinkedList::new();
+    if start_node_result == None {
+      println!("Invalid node, you must to add an edge with name: {} or add a node manually", start_node_name);
+      return;
+    }
 
-    // intialize for first vertice
-    visited[start_vertex] = true;
-    queue.push_front(start_vertex);
-    
-    while queue.len() > 0 {
-      let maybe_current_vertex = queue.pop_front();
-      
-      let current_vertex = maybe_current_vertex.unwrap();
+    // initializations
+    // let node_list_count = self.adjacency_list.len();
+    let mut counter = 0;
+    let mut queue: VecDeque<Node> = VecDeque::new();
+    let mut node_list: Vec<Node> = Vec::with_capacity(self.adjacency_list.len());
 
-      print!("{:?} ", current_vertex);
-      
-      let list = &self.adj_list[current_vertex];
+    // node initialization
+    for list_item in &self.adjacency_list {
+      node_list.push(
+        Node { 
+          index: 0,
+          level: 0,
+          name: list_item.node.to_owned(),
+          parent_name: "".to_owned(),
+          visited: false,
+        })
+    };
 
-      for &value in list {
+    fn get_remaining_items(node_list: &mut Vec<Node>, counter: i32, start_node_name: String) -> Option<&mut Node>{
+      if counter == 0 {
+        return node_list.iter_mut().find(|x| x.name == start_node_name);
+      }
 
-        if !visited[value] {
-          visited[value] = true;
-          queue.push_back(value)
+      return node_list.iter_mut().filter(|x| x.index == 0).next();
+    }
+
+    while let Some(root_node) = get_remaining_items(&mut node_list, counter, start_node_name.to_owned()) {
+      counter += 1;
+      root_node.index = counter;
+      root_node.visited = true;
+
+      queue.push_back(root_node.clone());
+
+      while queue.len() > 0 {
+        counter += 1;
+        let current_node = queue.pop_front().unwrap();
+        let current_node_neighbors = self.adjacency_list.iter().find(|&x| x.node == current_node.name).unwrap().list.borrow();
+
+        print!("{} ", current_node.name);
+
+        // for all node around
+        for neighbor in current_node_neighbors {
+          let neighbor_node = node_list.iter_mut().find(|x| x.name == *neighbor).unwrap();
+          
+          if !neighbor_node.visited {
+            neighbor_node.visited = true;
+            neighbor_node.index = counter;
+
+            queue.push_back(neighbor_node.clone());
+          }
         }
       }
     }
+
+  }
+
+  fn get_node_position_by_name(&mut self, name: String) -> Option<usize> {
+    self.adjacency_list.iter().position(|x| x.node == name)
   }
 }

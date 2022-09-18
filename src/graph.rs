@@ -59,7 +59,25 @@ impl Graph {
     self.adjacency_list[node_from_index].list.push_back(to);
   }
 
+  pub fn add_node(&mut self, name: &'static str) {
+    // check if node already exists
+    let search_result = self.adjacency_list.iter().any(|x| x.node == name );
+
+    if search_result {
+      println!("A node with same name of {} already exists! ❌", name);
+    }
+
+    let adj = Adjacency {
+      node: name,
+      list: LinkedList::new()
+    };
+
+    self.adjacency_list.push(adj);
+  }
+
   pub fn bfs(&mut self, start_node_name: &str) {
+    println!("Starting from vertex {:?}\n", start_node_name);
+
     // check if the start node is valid
     let start_node_result = self.get_node_position_by_name(start_node_name);
 
@@ -69,7 +87,6 @@ impl Graph {
     }
 
     // initializations
-    // let node_list_count = self.adjacency_list.len();
     let mut counter = 0;
     let mut queue: VecDeque<Node> = VecDeque::new();
     let mut node_list: Vec<Node> = Vec::with_capacity(self.adjacency_list.len());
